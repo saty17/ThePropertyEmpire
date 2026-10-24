@@ -1,0 +1,101 @@
+package com.tpe.propertyempire.controller;
+
+import com.tpe.propertyempire.dto.*;
+import com.tpe.propertyempire.entity.User;
+import com.tpe.propertyempire.repository.UserRepository;
+import com.tpe.propertyempire.service.NetworkService;
+import com.tpe.propertyempire.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/user")
+public class UserController {
+
+    private final UserService userService;
+    private final NetworkService networkService;
+    private final UserRepository userRepository;
+
+    public UserController(UserService userService, NetworkService networkService, UserRepository userRepository) {
+        this.userService = userService;
+        this.networkService = networkService;
+        this.userRepository = userRepository;
+    }
+
+    private String getCurrentUserId() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    private User getCurrentUser() {
+        return userRepository.findByTpeId(getCurrentUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse> getProfile() {
+        UserProfileDTO profile = userService.getProfile(getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success("Profile loaded", profile));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        ApiResponse response = userService.updateProfile(getCurrentUserId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse> getDashboard() {
+        DashboardDTO dashboard = userService.getDashboard(getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success("Dashboard loaded", dashboard));
+    }
+
+    @GetMapping("/my-directs")
+    public ResponseEntity<ApiResponse> getMyDirects() {
+        User user = getCurrentUser();
+        List<TeamMemberDTO> directs = networkService.getDirectReferrals(user.getTpeId());
+        return ResponseEntity.ok(ApiResponse.success("Direct referrals loaded", directs));
+    }
+
+    @GetMapping("/my-team")
+    public ResponseEntity<ApiResponse> getMyTeam() {
+        User user = getCurrentUser();
+        List<TeamMemberDTO> team = networkService.getTeamMembers(user.getTpeId());
+        return ResponseEntity.ok(ApiResponse.success("Team loaded", team));
+    }
+
+    @GetMapping("/generation-tree")
+    public ResponseEntity<ApiResponse> getGenerationTree(
+            @RequestParam(value = "rootCode", required = false) String rootCode) {
+        User rootUser;
+        if (rootCode != null && !rootCode.isBlank()) {
+            rootUser = userRepository.findByTpeId(rootCode)
+                    .orElseThrow(() -> new RuntimeException("User not found for code: " + rootCode));
+        } else {
+            rootUser = getCurrentUser();
+        }
+        TreeNodeDTO tree = networkService.getGenerationTree(rootUser, 5);
+        return ResponseEntity.ok(ApiResponse.success("Generation tree loaded", tree));
+    }
+
+    @GetMapping("/level-info")
+    public ResponseEntity<ApiResponse> getLevelInfo() {
+        User user = getCurrentUser();
+        List<LevelInfoDTO> info = networkService.getLevelInfo(user.getTpeId());
+        return ResponseEntity.ok(ApiResponse.success("Level info loaded", info));
+    }
+
+    @GetMapping("/referral-link")
+    public ResponseEntity<ApiResponse> getReferralLink() {
+        User user = getCurrentUser();
+        Map<String, String> data = new HashMap<>();
+        data.put("tpeId", user.getTpeId());
+        data.put("referralLink", "http://localhost:5173/signup?ref=" + user.getTpeId());
+        return ResponseEntity.ok(ApiResponse.success("Referral link generated", data));
+    }
+}
