@@ -6,17 +6,13 @@ import com.tpe.propertyempire.enums.OtpType;
 import com.tpe.propertyempire.enums.Role;
 import com.tpe.propertyempire.repository.UserRepository;
 import com.tpe.propertyempire.security.JwtTokenProvider;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -27,7 +23,6 @@ public class AuthService {
     private final OtpService otpService;
     private final EmailService emailService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthenticationManager authenticationManager;
 
     private static final String DIGITS = "0123456789";
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -35,13 +30,12 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                        OtpService otpService, EmailService emailService,
-                       JwtTokenProvider jwtTokenProvider, AuthenticationManager authenticationManager) {
+                       JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
         this.emailService = emailService;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.authenticationManager = authenticationManager;
     }
 
     @Transactional
@@ -66,77 +60,80 @@ public class AuthService {
                 .role(Role.USER)
                 .sponsorId(request.getSponsorId())
                 .tpeId(generateTpeId())
-                .enabled(false)
+                .enabled(true)
                 .build();
 
         userRepository.save(user);
 
-        String otp = otpService.generateOtp();
-        otpService.saveOtp(user.getTpeId(), request.getEmail(), otp, OtpType.REGISTRATION);
-        emailService.sendOtpEmail(request.getEmail(), otp, "Account Registration");
+        emailService.sendWelcomeEmail(user);
 
-        return ApiResponse.success(
-                "Registration successful. Please verify your email with the OTP sent.",
-                Map.of("tpeId", user.getTpeId())
-        );
+        RegistrationSuccessDTO dto = new RegistrationSuccessDTO();
+        dto.setTpeId(user.getTpeId());
+        dto.setFullName(user.getFullName());
+        dto.setEmail(user.getEmail());
+        dto.setCountryCode(user.getCountryCode());
+        dto.setMobile(user.getMobile());
+        dto.setJoinedDate(user.getCreatedAt() != null ? user.getCreatedAt().format(FMT) : null);
+
+        return ApiResponse.success("Registration successful!", dto);
+    }
+
+    public ApiResponse login(LoginRequest request) {
+        User user = userRepository.findByTpeId(request.getUserId()).orElse(null);
+        if (user == null) {
+            return ApiResponse.error("Invalid User ID or password");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ApiResponse.error("Invalid User ID or password");
+        }
+
+        if (!user.isEnabled()) {
+            return ApiResponse.error("Account is disabled. Please contact support.");
+        }
+
+        String otp = otpService.generateOtp();
+        otpService.saveOtp(user.getTpeId(), user.getEmail(), otp, OtpType.LOGIN);
+        emailService.sendOtpEmail(user.getEmail(), otp, "Login Verification");
+
+        String maskedEmail = maskEmail(user.getEmail());
+
+        Map<String, String> data = new HashMap<>();
+        data.put("tpeId", user.getTpeId());
+        data.put("email", maskedEmail);
+
+        return ApiResponse.success("OTP sent to your registered email", data);
     }
 
     @Transactional
-    public ApiResponse verifyRegistrationOtp(VerifyOtpRequest request) {
-        OtpType otpType = request.getOtpType() != null ? request.getOtpType() : OtpType.REGISTRATION;
-        boolean valid = otpService.verifyOtp(request.getTpeId(), request.getOtp(), otpType);
+    public ApiResponse verifyLoginOtp(String userId, String otp) {
+        boolean valid = otpService.verifyOtp(userId, otp, OtpType.LOGIN);
         if (!valid) {
             return ApiResponse.error("Invalid or expired OTP");
         }
 
-        if (otpType == OtpType.REGISTRATION) {
-            User user = userRepository.findByTpeId(request.getTpeId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            user.setEnabled(true);
-            userRepository.save(user);
+        User user = userRepository.findByTpeId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-            RegistrationSuccessDTO dto = new RegistrationSuccessDTO();
-            dto.setTpeId(user.getTpeId());
-            dto.setFullName(user.getFullName());
-            dto.setEmail(user.getEmail());
-            dto.setCountryCode(user.getCountryCode());
-            dto.setMobile(user.getMobile());
-            dto.setJoinedDate(user.getCreatedAt() != null ? user.getCreatedAt().format(FMT) : null);
+        String token = jwtTokenProvider.generateToken(userId);
 
-            emailService.sendWelcomeEmail(user);
+        AuthResponse authResponse = AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .tpeId(user.getTpeId())
+                .build();
 
-            return ApiResponse.success("Email verified successfully.", dto);
-        }
-
-        return ApiResponse.success("OTP verified.");
+        return ApiResponse.success("Login successful", authResponse);
     }
 
-    public ApiResponse login(LoginRequest request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUserId(), request.getPassword())
-            );
-
-            String token = jwtTokenProvider.generateToken(authentication);
-
-            User user = userRepository.findByTpeId(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            AuthResponse authResponse = AuthResponse.builder()
-                    .token(token)
-                    .email(user.getEmail())
-                    .fullName(user.getFullName())
-                    .role(user.getRole().name())
-                    .tpeId(user.getTpeId())
-                    .build();
-
-            return ApiResponse.success("Login successful", authResponse);
-
-        } catch (DisabledException e) {
-            return ApiResponse.error("Account not verified. Please verify your email first.");
-        } catch (BadCredentialsException e) {
-            return ApiResponse.error("Invalid User ID or password");
+    public ApiResponse verifyForgotPasswordOtp(String tpeId, String otp) {
+        boolean valid = otpService.verifyOtp(tpeId, otp, OtpType.FORGOT_PASSWORD);
+        if (!valid) {
+            return ApiResponse.error("Invalid or expired OTP");
         }
+        return ApiResponse.success("OTP verified.");
     }
 
     @Transactional
@@ -180,7 +177,7 @@ public class AuthService {
             return ApiResponse.error("No account found with this User ID");
         }
 
-        String purpose = otpType == OtpType.REGISTRATION ? "Account Registration" : "Password Reset";
+        String purpose = otpType == OtpType.LOGIN ? "Login Verification" : "Password Reset";
 
         String otp = otpService.generateOtp();
         otpService.saveOtp(tpeId, user.getEmail(), otp, otpType);
@@ -192,12 +189,18 @@ public class AuthService {
     public ApiResponse validateSponsor(String tpeId) {
         return userRepository.findByTpeId(tpeId)
                 .map(user -> {
-                    java.util.Map<String, String> data = new java.util.HashMap<>();
+                    Map<String, String> data = new HashMap<>();
                     data.put("name", user.getFullName());
                     data.put("tpeId", user.getTpeId());
                     return ApiResponse.success("Sponsor found", data);
                 })
                 .orElse(ApiResponse.error("Invalid referral code"));
+    }
+
+    private String maskEmail(String email) {
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 2) return email;
+        return email.charAt(0) + "***" + email.substring(atIndex - 1);
     }
 
     private String generateTpeId() {

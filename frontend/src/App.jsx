@@ -15,6 +15,7 @@ import MyTeam from './pages/dashboard/MyTeam'
 import GenerationTree from './pages/dashboard/GenerationTree'
 import LevelInfo from './pages/dashboard/LevelInfo'
 import ReferAndEarn from './pages/dashboard/ReferAndEarn'
+import AllMembers from './pages/dashboard/AllMembers'
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth()
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="network/generation-tree" element={<GenerationTree />} />
         <Route path="network/level-info" element={<LevelInfo />} />
         <Route path="refer" element={<ReferAndEarn />} />
+        <Route path="all-members" element={<AllMembers />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
 

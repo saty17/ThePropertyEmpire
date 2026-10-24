@@ -2,6 +2,7 @@ package com.tpe.propertyempire.service;
 
 import com.tpe.propertyempire.dto.*;
 import com.tpe.propertyempire.entity.User;
+import com.tpe.propertyempire.enums.Role;
 import com.tpe.propertyempire.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,6 +84,12 @@ public class UserService {
 
         dto.setTotalTeamSize(networkService.getTotalTeamSize(refCode));
         dto.setLevel(networkService.getUserLevel(user));
+        dto.setStatus(user.getStatus() != null ? user.getStatus().name() : "INACTIVE");
+
+        if (user.getRole() == Role.ADMIN) {
+            dto.setTotalSystemUsers((int) userRepository.countByRole(Role.USER));
+            dto.setIndependentMembers((int) userRepository.countBySponsorIdIsNullAndRole(Role.USER));
+        }
 
         return dto;
     }

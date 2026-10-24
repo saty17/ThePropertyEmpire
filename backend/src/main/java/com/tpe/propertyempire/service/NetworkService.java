@@ -99,6 +99,34 @@ public class NetworkService {
         return result;
     }
 
+    public List<TeamMemberDTO> getLevelMembers(String tpeId, int targetLevel) {
+        List<TeamMemberDTO> result = new ArrayList<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(tpeId);
+        int level = 0;
+        int maxLevel = 10;
+
+        while (!queue.isEmpty() && level < maxLevel) {
+            level++;
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                String code = queue.poll();
+                List<User> directs = userRepository.findBySponsorId(code);
+                for (User u : directs) {
+                    if (level == targetLevel) {
+                        TeamMemberDTO dto = TeamMemberDTO.fromUser(u, level);
+                        User sponsor = userRepository.findByTpeId(u.getSponsorId()).orElse(null);
+                        dto.setSponsorName(sponsor != null ? sponsor.getFullName() : "-");
+                        result.add(dto);
+                    }
+                    queue.add(u.getTpeId());
+                }
+            }
+            if (level >= targetLevel) break;
+        }
+        return result;
+    }
+
     public int getUserLevel(User user) {
         int level = 0;
         String currentSponsorId = user.getSponsorId();
@@ -113,6 +141,39 @@ public class NetworkService {
             currentSponsorId = sponsor.getSponsorId();
         }
         return level;
+    }
+
+    public List<TeamMemberDTO> getAllMembers(String filter, String adminTpeId) {
+        List<User> users;
+
+        switch (filter.toUpperCase()) {
+            case "MY_NETWORK":
+                return getTeamMembers(adminTpeId);
+            case "INDEPENDENT":
+                users = userRepository.findByRole(Role.USER);
+                return users.stream()
+                        .filter(u -> u.getSponsorId() == null || u.getSponsorId().isBlank())
+                        .map(u -> {
+                            TeamMemberDTO dto = TeamMemberDTO.fromUser(u, 0);
+                            dto.setSponsorName("-");
+                            return dto;
+                        })
+                        .toList();
+            default:
+                users = userRepository.findByRole(Role.USER);
+                return users.stream()
+                        .map(u -> {
+                            TeamMemberDTO dto = TeamMemberDTO.fromUser(u, 0);
+                            if (u.getSponsorId() != null && !u.getSponsorId().isBlank()) {
+                                User sponsor = userRepository.findByTpeId(u.getSponsorId()).orElse(null);
+                                dto.setSponsorName(sponsor != null ? sponsor.getFullName() : "-");
+                            } else {
+                                dto.setSponsorName("-");
+                            }
+                            return dto;
+                        })
+                        .toList();
+        }
     }
 
     public int getTotalTeamSize(String tpeId) {

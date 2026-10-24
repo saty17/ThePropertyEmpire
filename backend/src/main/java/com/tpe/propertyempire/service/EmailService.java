@@ -24,7 +24,6 @@ public class EmailService {
 
     @Async
     public void sendOtpEmail(String to, String otp, String purpose) {
-        log.info("OTP for {} [{}]: {}", to, purpose, otp);
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

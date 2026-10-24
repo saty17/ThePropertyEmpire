@@ -15,9 +15,11 @@ public class TeamMemberDTO {
     private String mobile;
     private String tpeId;
     private String sponsorId;
+    private String sponsorName;
     private int level;
     private String joinedDate;
     private String status;
+    private String activationDate;
 
     public TeamMemberDTO() {}
 
@@ -32,7 +34,8 @@ public class TeamMemberDTO {
         dto.sponsorId = user.getSponsorId();
         dto.level = level;
         dto.joinedDate = user.getCreatedAt() != null ? user.getCreatedAt().format(FMT) : null;
-        dto.status = user.isEnabled() ? "Active" : "Inactive";
+        dto.status = user.getStatus() != null ? user.getStatus().name() : "INACTIVE";
+        dto.activationDate = user.getActivationDate() != null ? user.getActivationDate().format(FMT) : null;
         return dto;
     }
 
@@ -50,10 +53,14 @@ public class TeamMemberDTO {
     public void setTpeId(String tpeId) { this.tpeId = tpeId; }
     public String getSponsorId() { return sponsorId; }
     public void setSponsorId(String sponsorId) { this.sponsorId = sponsorId; }
+    public String getSponsorName() { return sponsorName; }
+    public void setSponsorName(String sponsorName) { this.sponsorName = sponsorName; }
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
     public String getJoinedDate() { return joinedDate; }
     public void setJoinedDate(String joinedDate) { this.joinedDate = joinedDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getActivationDate() { return activationDate; }
+    public void setActivationDate(String activationDate) { this.activationDate = activationDate; }
 }

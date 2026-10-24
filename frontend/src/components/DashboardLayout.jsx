@@ -3,26 +3,37 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import {
   FiHome, FiUser, FiUsers, FiArrowRight, FiGitBranch, FiLayers,
   FiShare2, FiSettings, FiHelpCircle, FiLogOut, FiMenu, FiX,
-  FiBell, FiChevronDown,
+  FiBell, FiChevronDown, FiDatabase,
 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 import '../styles/dashboard.css'
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: FiHome, to: '/dashboard', end: true },
-  { label: 'Profile', icon: FiUser, to: '/dashboard/profile' },
-  {
-    label: 'Network', icon: FiUsers, children: [
-      { label: 'My Direct', icon: FiArrowRight, to: '/dashboard/network/my-direct' },
-      { label: 'My Team', icon: FiUsers, to: '/dashboard/network/my-team' },
-      { label: 'Generation Tree', icon: FiGitBranch, to: '/dashboard/network/generation-tree' },
-      { label: 'Level Info', icon: FiLayers, to: '/dashboard/network/level-info' },
-    ],
-  },
-  { label: 'Refer & Earn', icon: FiShare2, to: '/dashboard/refer' },
-  { label: 'Settings', icon: FiSettings, to: '/dashboard/settings', placeholder: true },
-  { label: 'Support', icon: FiHelpCircle, to: '/dashboard/support', placeholder: true },
-]
+function getNavItems(role) {
+  const items = [
+    { label: 'Dashboard', icon: FiHome, to: '/dashboard', end: true },
+    { label: 'Profile', icon: FiUser, to: '/dashboard/profile' },
+    {
+      label: 'Network', icon: FiUsers, children: [
+        { label: 'My Direct', icon: FiArrowRight, to: '/dashboard/network/my-direct' },
+        { label: 'My Team', icon: FiUsers, to: '/dashboard/network/my-team' },
+        { label: 'Generation Tree', icon: FiGitBranch, to: '/dashboard/network/generation-tree' },
+        { label: 'Level Info', icon: FiLayers, to: '/dashboard/network/level-info' },
+      ],
+    },
+    { label: 'Refer & Earn', icon: FiShare2, to: '/dashboard/refer' },
+  ]
+
+  if (role === 'ADMIN') {
+    items.push({ label: 'All Members', icon: FiDatabase, to: '/dashboard/all-members' })
+  }
+
+  items.push(
+    { label: 'Settings', icon: FiSettings, to: '/dashboard/settings', placeholder: true },
+    { label: 'Support', icon: FiHelpCircle, to: '/dashboard/support', placeholder: true },
+  )
+
+  return items
+}
 
 function getInitials(name) {
   if (!name) return '?'
@@ -34,6 +45,7 @@ export default function DashboardLayout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState(null)
+  const navItems = getNavItems(user?.role)
 
   useEffect(() => {
     const networkPaths = ['/dashboard/network']
@@ -67,7 +79,7 @@ export default function DashboardLayout() {
         </div>
 
         <nav className="dash-sidebar__nav">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             if (item.children) {
               const isExpanded = expandedMenu === item.label
               const isChildActive = item.children.some((c) => location.pathname === c.to)

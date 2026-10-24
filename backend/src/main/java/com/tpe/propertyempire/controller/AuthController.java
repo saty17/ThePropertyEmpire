@@ -24,17 +24,25 @@ public class AuthController {
                 : ResponseEntity.badRequest().body(response);
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<ApiResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
-        ApiResponse response = authService.verifyRegistrationOtp(request);
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest request) {
+        ApiResponse response = authService.login(request);
         return response.isSuccess()
                 ? ResponseEntity.ok(response)
                 : ResponseEntity.badRequest().body(response);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest request) {
-        ApiResponse response = authService.login(request);
+    @PostMapping("/verify-login-otp")
+    public ResponseEntity<ApiResponse> verifyLoginOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        ApiResponse response = authService.verifyLoginOtp(request.getTpeId(), request.getOtp());
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.badRequest().body(response);
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        ApiResponse response = authService.verifyForgotPasswordOtp(request.getTpeId(), request.getOtp());
         return response.isSuccess()
                 ? ResponseEntity.ok(response)
                 : ResponseEntity.badRequest().body(response);

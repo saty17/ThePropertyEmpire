@@ -2,6 +2,7 @@ package com.tpe.propertyempire.dto;
 
 import com.tpe.propertyempire.entity.User;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class UserProfileDTO {
@@ -18,6 +19,8 @@ public class UserProfileDTO {
     private String sponsorId;
     private String sponsorName;
     private boolean enabled;
+    private String status;
+    private LocalDateTime activationDate;
     private String createdAt;
 
     public UserProfileDTO() {}
@@ -34,6 +37,8 @@ public class UserProfileDTO {
         dto.sponsorId = user.getSponsorId();
         dto.sponsorName = sponsorName;
         dto.enabled = user.isEnabled();
+        dto.status = user.getStatus() != null ? user.getStatus().name() : "INACTIVE";
+        dto.activationDate = user.getActivationDate();
         dto.createdAt = user.getCreatedAt() != null ? user.getCreatedAt().format(FMT) : null;
         return dto;
     }
@@ -58,6 +63,10 @@ public class UserProfileDTO {
     public void setSponsorName(String sponsorName) { this.sponsorName = sponsorName; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public LocalDateTime getActivationDate() { return activationDate; }
+    public void setActivationDate(LocalDateTime activationDate) { this.activationDate = activationDate; }
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 }

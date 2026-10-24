@@ -3,12 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FiHash, FiLock, FiEye, FiEyeOff, FiArrowRight, FiShield } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import AuthLayout from '../components/AuthLayout'
-import { useAuth } from '../context/AuthContext'
 import { login as loginApi } from '../api/auth'
 
 function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
   const [form, setForm] = useState({ userId: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,9 +24,10 @@ function Login() {
     setLoading(true)
     try {
       const res = await loginApi(form)
-      toast.success(res.data.message || 'Login successful!')
-      login(res.data.data)
-      navigate('/dashboard', { replace: true })
+      toast.success(res.data.message || 'OTP sent to your email!')
+      navigate('/verify-otp', {
+        state: { tpeId: form.userId, email: res.data.data.email, flow: 'login' }
+      })
     } catch (err) {
       toast.error(err.message)
     } finally {

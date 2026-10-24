@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FiGitBranch, FiPlus, FiMinus, FiArrowLeft } from 'react-icons/fi'
+import { FiGitBranch, FiPlus, FiMinus, FiArrowLeft, FiSearch } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { getGenerationTree } from '../../api/user'
 
@@ -53,6 +53,7 @@ export default function GenerationTree() {
   const [loading, setLoading] = useState(true)
   const [rootCode, setRootCode] = useState(null)
   const [expandedNodes, setExpandedNodes] = useState(new Set())
+  const [searchCode, setSearchCode] = useState('')
 
   const fetchTree = useCallback((code) => {
     setLoading(true)
@@ -85,13 +86,44 @@ export default function GenerationTree() {
   return (
     <div className="dash-page">
       <div className="page-header">
-        <h2 className="page-title"><FiGitBranch size={22} /> My Generation Tree</h2>
+        <h2 className="page-title"><FiGitBranch size={22} /> {rootCode ? `Tree: ${rootCode}` : 'My Generation Tree'}</h2>
         {rootCode && (
           <button className="btn-outline" onClick={resetToMyTree}>
             <FiArrowLeft size={14} /> Back to My Tree
           </button>
         )}
       </div>
+
+      {user?.role === 'ADMIN' && (
+        <div className="tree-search">
+          <div className="search-bar">
+            <FiSearch size={16} />
+            <input
+              type="text"
+              placeholder="Enter TPE ID to view any user's tree..."
+              value={searchCode}
+              onChange={(e) => setSearchCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchCode.trim()) {
+                  setRootCode(searchCode.trim())
+                  setSearchCode('')
+                }
+              }}
+            />
+            <button
+              className="btn-gold btn-gold--sm"
+              onClick={() => {
+                if (searchCode.trim()) {
+                  setRootCode(searchCode.trim())
+                  setSearchCode('')
+                }
+              }}
+            >
+              Search
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="dash-loader">Loading tree...</div>

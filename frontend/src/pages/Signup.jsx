@@ -105,9 +105,8 @@ function Signup() {
         password: form.password,
         confirmPassword: form.confirmPassword,
       })
-      toast.success(res.data.message || 'OTP sent to your email!')
-      const tpeId = res.data.data.tpeId
-      navigate('/verify-otp', { state: { email: form.email, tpeId, flow: 'signup' } })
+      toast.success(res.data.message || 'Registration successful!')
+      navigate('/registration-success', { state: { userDetails: res.data.data } })
     } catch (err) {
       toast.error(err.message)
     } finally {

@@ -39,3 +39,7 @@ export const getGenerationTree = (rootCode) =>
   API.get('/generation-tree', { params: rootCode ? { rootCode } : {} })
 
 export const getLevelInfo = () => API.get('/level-info')
+
+export const getLevelMembers = (level) => API.get('/level-members', { params: { level } })
+
+export const getAllMembers = (filter) => API.get('/all-members', { params: { filter } })

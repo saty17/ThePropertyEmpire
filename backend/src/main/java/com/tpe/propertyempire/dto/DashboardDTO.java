@@ -12,6 +12,9 @@ public class DashboardDTO {
     private int totalTeamSize;
     private int todayDirects;
     private int level;
+    private String status;
+    private int totalSystemUsers;
+    private int independentMembers;
 
     public DashboardDTO() {}
 
@@ -35,4 +38,10 @@ public class DashboardDTO {
     public void setTodayDirects(int todayDirects) { this.todayDirects = todayDirects; }
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public int getTotalSystemUsers() { return totalSystemUsers; }
+    public void setTotalSystemUsers(int totalSystemUsers) { this.totalSystemUsers = totalSystemUsers; }
+    public int getIndependentMembers() { return independentMembers; }
+    public void setIndependentMembers(int independentMembers) { this.independentMembers = independentMembers; }
 }

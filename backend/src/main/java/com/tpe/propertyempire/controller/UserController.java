@@ -2,6 +2,7 @@ package com.tpe.propertyempire.controller;
 
 import com.tpe.propertyempire.dto.*;
 import com.tpe.propertyempire.entity.User;
+import com.tpe.propertyempire.enums.Role;
 import com.tpe.propertyempire.repository.UserRepository;
 import com.tpe.propertyempire.service.NetworkService;
 import com.tpe.propertyempire.service.UserService;
@@ -88,6 +89,25 @@ public class UserController {
         User user = getCurrentUser();
         List<LevelInfoDTO> info = networkService.getLevelInfo(user.getTpeId());
         return ResponseEntity.ok(ApiResponse.success("Level info loaded", info));
+    }
+
+    @GetMapping("/level-members")
+    public ResponseEntity<ApiResponse> getLevelMembers(@RequestParam int level) {
+        User user = getCurrentUser();
+        List<TeamMemberDTO> members = networkService.getLevelMembers(user.getTpeId(), level);
+        return ResponseEntity.ok(ApiResponse.success("Level members retrieved", members));
+    }
+
+    @GetMapping("/all-members")
+    public ResponseEntity<ApiResponse> getAllMembers(
+            @RequestParam(value = "filter", defaultValue = "ALL") String filter) {
+        User user = getCurrentUser();
+        if (user.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error("Access denied. Admin only."));
+        }
+        List<TeamMemberDTO> members = networkService.getAllMembers(filter, user.getTpeId());
+        return ResponseEntity.ok(ApiResponse.success("Members retrieved", members));
     }
 
     @GetMapping("/referral-link")

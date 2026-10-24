@@ -20,6 +20,8 @@ export const login = (data) => API.post('/login', data)
 
 export const verifyOtp = (data) => API.post('/verify-otp', data)
 
+export const verifyLoginOtp = (data) => API.post('/verify-login-otp', data)
+
 export const resendOtp = (data) => API.post('/resend-otp', data)
 
 export const forgotPassword = (data) => API.post('/forgot-password', data)

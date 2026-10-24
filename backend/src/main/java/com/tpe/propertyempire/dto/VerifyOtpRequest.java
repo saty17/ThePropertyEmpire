@@ -12,7 +12,6 @@ public class VerifyOtpRequest {
     @NotBlank(message = "OTP is required")
     private String otp;
 
-    @NotNull(message = "OTP type is required")
     private OtpType otpType;
 
     public String getTpeId() { return tpeId; }

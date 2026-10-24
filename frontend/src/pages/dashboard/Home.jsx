@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   FiCopy, FiUsers, FiGitBranch, FiUser, FiAward, FiArrowRight,
-  FiShare2, FiCheck, FiStar, FiTrendingUp,
+  FiShare2, FiCheck, FiStar, FiTrendingUp, FiDatabase, FiUserMinus,
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
@@ -92,6 +92,10 @@ export default function Home() {
           { label: 'Direct Referrals', value: loading ? '...' : s.totalDirects ?? 0, icon: FiArrowRight, cls: 'direct' },
           { label: 'Total Team', value: loading ? '...' : s.totalTeamSize ?? 0, icon: FiUsers, cls: 'team' },
           { label: 'Account Level', value: loading ? '...' : s.level ?? 0, icon: FiStar, cls: 'level' },
+          ...(user?.role === 'ADMIN' ? [
+            { label: 'Total Users', value: loading ? '...' : s.totalSystemUsers ?? 0, icon: FiDatabase, cls: 'system' },
+            { label: 'Independent Members', value: loading ? '...' : s.independentMembers ?? 0, icon: FiUserMinus, cls: 'independent' },
+          ] : []),
         ].map((c) => (
           <div key={c.label} className={`stat-card stat-card--${c.cls}`}>
             <div className="stat-card__icon"><c.icon size={22} /></div>

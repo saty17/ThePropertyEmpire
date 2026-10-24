@@ -1,5 +1,6 @@
 package com.tpe.propertyempire.entity;
 
+import com.tpe.propertyempire.enums.AccountStatus;
 import com.tpe.propertyempire.enums.Role;
 import jakarta.persistence.*;
 
@@ -38,6 +39,12 @@ public class User {
     @Column(nullable = false)
     private boolean enabled;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status = AccountStatus.INACTIVE;
+
+    private LocalDateTime activationDate;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -47,7 +54,8 @@ public class User {
 
     public User(Long id, String fullName, String email, String countryCode, String mobile,
                 String password, Role role, String sponsorId, String tpeId,
-                boolean enabled, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                boolean enabled, AccountStatus status, LocalDateTime activationDate,
+                LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -58,6 +66,8 @@ public class User {
         this.sponsorId = sponsorId;
         this.tpeId = tpeId;
         this.enabled = enabled;
+        this.status = status;
+        this.activationDate = activationDate;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -93,6 +103,10 @@ public class User {
     public void setTpeId(String tpeId) { this.tpeId = tpeId; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public AccountStatus getStatus() { return status; }
+    public void setStatus(AccountStatus status) { this.status = status; }
+    public LocalDateTime getActivationDate() { return activationDate; }
+    public void setActivationDate(LocalDateTime activationDate) { this.activationDate = activationDate; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
@@ -109,6 +123,8 @@ public class User {
         private String sponsorId;
         private String tpeId;
         private boolean enabled;
+        private AccountStatus status = AccountStatus.INACTIVE;
+        private LocalDateTime activationDate;
 
         public UserBuilder id(Long id) { this.id = id; return this; }
         public UserBuilder fullName(String fullName) { this.fullName = fullName; return this; }
@@ -120,6 +136,8 @@ public class User {
         public UserBuilder sponsorId(String sponsorId) { this.sponsorId = sponsorId; return this; }
         public UserBuilder tpeId(String tpeId) { this.tpeId = tpeId; return this; }
         public UserBuilder enabled(boolean enabled) { this.enabled = enabled; return this; }
+        public UserBuilder status(AccountStatus status) { this.status = status; return this; }
+        public UserBuilder activationDate(LocalDateTime activationDate) { this.activationDate = activationDate; return this; }
 
         public User build() {
             User user = new User();
@@ -133,6 +151,8 @@ public class User {
             user.sponsorId = this.sponsorId;
             user.tpeId = this.tpeId;
             user.enabled = this.enabled;
+            user.status = this.status;
+            user.activationDate = this.activationDate;
             return user;
         }
     }

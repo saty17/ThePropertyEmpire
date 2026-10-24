@@ -1,6 +1,7 @@
 package com.tpe.propertyempire.config;
 
 import com.tpe.propertyempire.entity.User;
+import com.tpe.propertyempire.enums.AccountStatus;
 import com.tpe.propertyempire.enums.Role;
 import com.tpe.propertyempire.repository.UserRepository;
 import org.slf4j.Logger;
@@ -9,8 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -37,20 +36,8 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.existsByTpeId(ADMIN_TPE_ID)) {
-            log.info("Admin user already exists with TPE ID: {}", ADMIN_TPE_ID);
-            return;
-        }
-
-        Optional<User> existingAdmin = userRepository.findByEmail(adminEmail);
-        if (existingAdmin.isPresent()) {
-            User admin = existingAdmin.get();
-            admin.setTpeId(ADMIN_TPE_ID);
-            if (admin.getCountryCode() == null) {
-                admin.setCountryCode("+91");
-            }
-            userRepository.save(admin);
-            log.info("Admin user migrated to new TPE ID: {}", ADMIN_TPE_ID);
+        if (userRepository.existsByRole(Role.ADMIN)) {
+            log.info("Admin user already exists");
             return;
         }
 
@@ -63,6 +50,7 @@ public class DataInitializer implements CommandLineRunner {
                 .role(Role.ADMIN)
                 .tpeId(ADMIN_TPE_ID)
                 .enabled(true)
+                .status(AccountStatus.ACTIVE)
                 .build();
 
         userRepository.save(admin);

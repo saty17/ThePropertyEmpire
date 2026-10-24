@@ -3,14 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiShield } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import AuthLayout from '../components/AuthLayout'
-import { verifyOtp, resendOtp } from '../api/auth'
+import { verifyOtp, verifyLoginOtp, resendOtp } from '../api/auth'
+import { useAuth } from '../context/AuthContext'
 
 function VerifyOtp() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { login } = useAuth()
   const email = location.state?.email || ''
   const tpeId = location.state?.tpeId || ''
-  const flow = location.state?.flow || 'signup'
+  const flow = location.state?.flow || 'login'
 
   const [otp, setOtp] = useState(Array(6).fill(''))
   const [loading, setLoading] = useState(false)
@@ -69,13 +71,15 @@ function VerifyOtp() {
     }
     setLoading(true)
     try {
-      const otpType = flow === 'forgot-password' ? 'FORGOT_PASSWORD' : 'REGISTRATION'
-      const res = await verifyOtp({ tpeId, otp: code, otpType })
-      toast.success(res.data.message || 'Verified successfully!')
-      if (flow === 'forgot-password') {
-        navigate('/reset-password', { state: { userId: tpeId } })
+      if (flow === 'login') {
+        const res = await verifyLoginOtp({ tpeId, otp: code })
+        toast.success(res.data.message || 'Login successful!')
+        login(res.data.data)
+        navigate('/dashboard', { replace: true })
       } else {
-        navigate('/registration-success', { state: { userDetails: res.data.data } })
+        const res = await verifyOtp({ tpeId, otp: code, otpType: 'FORGOT_PASSWORD' })
+        toast.success(res.data.message || 'Verified successfully!')
+        navigate('/reset-password', { state: { userId: tpeId } })
       }
     } catch (err) {
       toast.error(err.message)
@@ -86,7 +90,7 @@ function VerifyOtp() {
 
   const handleResend = async () => {
     try {
-      const otpType = flow === 'forgot-password' ? 'FORGOT_PASSWORD' : 'REGISTRATION'
+      const otpType = flow === 'login' ? 'LOGIN' : 'FORGOT_PASSWORD'
       await resendOtp({ tpeId, otpType })
       toast.success('OTP resent successfully!')
       setCooldown(60)

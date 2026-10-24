@@ -1,6 +1,7 @@
 package com.tpe.propertyempire.repository;
 
 import com.tpe.propertyempire.entity.User;
+import com.tpe.propertyempire.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,9 +12,11 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);
+    List<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    boolean existsByRole(Role role);
 
     Optional<User> findByTpeId(String tpeId);
 
@@ -24,4 +27,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countBySponsorId(String sponsorId);
 
     long countBySponsorIdAndCreatedAtAfter(String sponsorId, LocalDateTime after);
+
+    List<User> findByRole(Role role);
+
+    long countByRole(Role role);
+
+    long countBySponsorIdIsNullAndRole(Role role);
 }
