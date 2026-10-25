@@ -38,6 +38,15 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    private String resolveRootCode(String rootCode) {
+        if (rootCode != null && !rootCode.isBlank()) {
+            userRepository.findByTpeId(rootCode)
+                    .orElseThrow(() -> new RuntimeException("User not found for code: " + rootCode));
+            return rootCode;
+        }
+        return getCurrentUserId();
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse> getProfile() {
         UserProfileDTO profile = userService.getProfile(getCurrentUserId());
@@ -57,16 +66,18 @@ public class UserController {
     }
 
     @GetMapping("/my-directs")
-    public ResponseEntity<ApiResponse> getMyDirects() {
-        User user = getCurrentUser();
-        List<TeamMemberDTO> directs = networkService.getDirectReferrals(user.getTpeId());
+    public ResponseEntity<ApiResponse> getMyDirects(
+            @RequestParam(value = "rootCode", required = false) String rootCode) {
+        String tpeId = resolveRootCode(rootCode);
+        List<TeamMemberDTO> directs = networkService.getDirectReferrals(tpeId);
         return ResponseEntity.ok(ApiResponse.success("Direct referrals loaded", directs));
     }
 
     @GetMapping("/my-team")
-    public ResponseEntity<ApiResponse> getMyTeam() {
-        User user = getCurrentUser();
-        List<TeamMemberDTO> team = networkService.getTeamMembers(user.getTpeId());
+    public ResponseEntity<ApiResponse> getMyTeam(
+            @RequestParam(value = "rootCode", required = false) String rootCode) {
+        String tpeId = resolveRootCode(rootCode);
+        List<TeamMemberDTO> team = networkService.getTeamMembers(tpeId);
         return ResponseEntity.ok(ApiResponse.success("Team loaded", team));
     }
 
@@ -85,16 +96,19 @@ public class UserController {
     }
 
     @GetMapping("/level-info")
-    public ResponseEntity<ApiResponse> getLevelInfo() {
-        User user = getCurrentUser();
-        List<LevelInfoDTO> info = networkService.getLevelInfo(user.getTpeId());
+    public ResponseEntity<ApiResponse> getLevelInfo(
+            @RequestParam(value = "rootCode", required = false) String rootCode) {
+        String tpeId = resolveRootCode(rootCode);
+        List<LevelInfoDTO> info = networkService.getLevelInfo(tpeId);
         return ResponseEntity.ok(ApiResponse.success("Level info loaded", info));
     }
 
     @GetMapping("/level-members")
-    public ResponseEntity<ApiResponse> getLevelMembers(@RequestParam int level) {
-        User user = getCurrentUser();
-        List<TeamMemberDTO> members = networkService.getLevelMembers(user.getTpeId(), level);
+    public ResponseEntity<ApiResponse> getLevelMembers(
+            @RequestParam int level,
+            @RequestParam(value = "rootCode", required = false) String rootCode) {
+        String tpeId = resolveRootCode(rootCode);
+        List<TeamMemberDTO> members = networkService.getLevelMembers(tpeId, level);
         return ResponseEntity.ok(ApiResponse.success("Level members retrieved", members));
     }
 

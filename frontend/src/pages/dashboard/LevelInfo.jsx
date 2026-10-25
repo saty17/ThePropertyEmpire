@@ -1,8 +1,53 @@
-import { useState, useEffect } from 'react'
-import { FiLayers, FiUsers, FiChevronDown, FiChevronRight } from 'react-icons/fi'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { FiLayers, FiUsers, FiChevronDown, FiChevronRight, FiArrowLeft, FiMoreVertical, FiGitBranch, FiUserPlus } from 'react-icons/fi'
 import { getLevelInfo, getLevelMembers } from '../../api/user'
 
+const ACTIONS = [
+  { key: 'tree', label: 'View Tree', icon: FiGitBranch, path: '/dashboard/network/generation-tree' },
+  { key: 'direct', label: 'View Direct', icon: FiUserPlus, path: '/dashboard/network/my-direct' },
+  { key: 'team', label: 'View Team', icon: FiUsers, path: '/dashboard/network/my-team' },
+  { key: 'level', label: 'Level Info', icon: FiLayers, path: '/dashboard/network/level-info' },
+]
+
+function ActionMenu({ tpeId, fullName, onAction }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => { if (!ref.current?.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  return (
+    <div className="action-menu" ref={ref}>
+      <button className="btn-icon" title="Actions" onClick={() => setOpen(!open)}>
+        <FiMoreVertical size={15} />
+      </button>
+      {open && (
+        <div className="action-menu__dropdown">
+          {ACTIONS.map((a) => (
+            <button
+              key={a.key}
+              className="action-menu__item"
+              onClick={() => { setOpen(false); onAction(a.path, tpeId, fullName) }}
+            >
+              <a.icon size={14} /> {a.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function LevelInfo() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const rootCode = location.state?.rootCode || null
+  const rootName = location.state?.rootName || null
   const [levels, setLevels] = useState([])
   const [loading, setLoading] = useState(true)
   const [expandedLevel, setExpandedLevel] = useState(null)
@@ -10,11 +55,11 @@ export default function LevelInfo() {
   const [memberLoading, setMemberLoading] = useState(null)
 
   useEffect(() => {
-    getLevelInfo()
+    getLevelInfo(rootCode)
       .then((res) => setLevels(res.data.data || []))
       .catch(() => setLevels([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [rootCode])
 
   const total = levels.reduce((sum, l) => sum + l.memberCount, 0)
   const maxCount = Math.max(...levels.map((l) => l.memberCount), 1)
@@ -28,13 +73,17 @@ export default function LevelInfo() {
     if (levelMembers[level]) return
     setMemberLoading(level)
     try {
-      const res = await getLevelMembers(level)
+      const res = await getLevelMembers(level, rootCode)
       setLevelMembers((prev) => ({ ...prev, [level]: res.data.data || [] }))
     } catch {
       setLevelMembers((prev) => ({ ...prev, [level]: [] }))
     } finally {
       setMemberLoading(null)
     }
+  }
+
+  const handleAction = (path, tpeId, fullName) => {
+    navigate(path, { state: { rootCode: tpeId, rootName: fullName } })
   }
 
   if (loading) {
@@ -44,7 +93,14 @@ export default function LevelInfo() {
   return (
     <div className="dash-page">
       <div className="page-header">
-        <h2 className="page-title"><FiLayers size={22} /> Network Level Info</h2>
+        <h2 className="page-title">
+          <FiLayers size={22} /> {rootCode ? `Level Info: ${rootName || rootCode}` : 'Network Level Info'}
+        </h2>
+        {rootCode && (
+          <button className="btn-outline" onClick={() => navigate(-1)}>
+            <FiArrowLeft size={14} /> Back
+          </button>
+        )}
       </div>
 
       <div className="level-total-card">
@@ -59,7 +115,7 @@ export default function LevelInfo() {
         <div className="empty-state">
           <FiLayers size={48} />
           <h3>No team members yet</h3>
-          <p>Your level breakdown will appear here as your network grows.</p>
+          <p>{rootCode ? 'This user has no team members.' : 'Your level breakdown will appear here as your network grows.'}</p>
         </div>
       ) : (
         <div className="level-list">
@@ -103,6 +159,7 @@ export default function LevelInfo() {
                             <th>Sponsor ID</th>
                             <th>Sponsor Name</th>
                             <th>Status</th>
+                            <th>Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -117,6 +174,9 @@ export default function LevelInfo() {
                                 <span className={`status-badge status-badge--${m.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
                                   {m.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                                 </span>
+                              </td>
+                              <td>
+                                <ActionMenu tpeId={m.tpeId} fullName={m.fullName} onAction={handleAction} />
                               </td>
                             </tr>
                           ))}

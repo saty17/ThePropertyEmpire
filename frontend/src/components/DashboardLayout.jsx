@@ -20,7 +20,6 @@ function getNavItems(role) {
         { label: 'Level Info', icon: FiLayers, to: '/dashboard/network/level-info' },
       ],
     },
-    { label: 'Refer & Earn', icon: FiShare2, to: '/dashboard/refer' },
   ]
 
   if (role === 'ADMIN') {
@@ -28,6 +27,7 @@ function getNavItems(role) {
   }
 
   items.push(
+    { label: 'Refer & Earn', icon: FiShare2, to: '/dashboard/refer' },
     { label: 'Settings', icon: FiSettings, to: '/dashboard/settings', placeholder: true },
     { label: 'Support', icon: FiHelpCircle, to: '/dashboard/support', placeholder: true },
   )

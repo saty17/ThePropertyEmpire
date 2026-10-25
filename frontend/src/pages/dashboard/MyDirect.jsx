@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react'
-import { FiUsers, FiShare2 } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
+import { FiUsers, FiShare2, FiArrowLeft } from 'react-icons/fi'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getMyDirects } from '../../api/user'
 
 export default function MyDirect() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const rootCode = location.state?.rootCode || null
+  const rootName = location.state?.rootName || null
   const [directs, setDirects] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getMyDirects()
+    getMyDirects(rootCode)
       .then((res) => setDirects(res.data.data || []))
       .catch(() => setDirects([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [rootCode])
 
   if (loading) {
     return <div className="dash-page"><div className="dash-loader">Loading...</div></div>
@@ -22,18 +25,29 @@ export default function MyDirect() {
   return (
     <div className="dash-page">
       <div className="page-header">
-        <h2 className="page-title"><FiUsers size={22} /> My Direct Referrals</h2>
-        <span className="page-badge">{directs.length} members</span>
+        <h2 className="page-title">
+          <FiUsers size={22} /> {rootCode ? `Direct Referrals: ${rootName || rootCode}` : 'My Direct Referrals'}
+        </h2>
+        <div className="page-header__right">
+          <span className="page-badge">{directs.length} members</span>
+          {rootCode && (
+            <button className="btn-outline" onClick={() => navigate(-1)}>
+              <FiArrowLeft size={14} /> Back
+            </button>
+          )}
+        </div>
       </div>
 
       {directs.length === 0 ? (
         <div className="empty-state">
           <FiUsers size={48} />
           <h3>No direct referrals yet</h3>
-          <p>Share your referral link to grow your network!</p>
-          <button className="btn-gold" onClick={() => navigate('/dashboard/refer')}>
-            <FiShare2 size={16} /> Share Referral Link
-          </button>
+          <p>{rootCode ? 'This user has no direct referrals.' : 'Share your referral link to grow your network!'}</p>
+          {!rootCode && (
+            <button className="btn-gold" onClick={() => navigate('/dashboard/refer')}>
+              <FiShare2 size={16} /> Share Referral Link
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -60,8 +74,8 @@ export default function MyDirect() {
                     <td><code className="code-badge">{d.tpeId}</code></td>
                     <td>{d.joinedDate ? new Date(d.joinedDate).toLocaleDateString() : '-'}</td>
                     <td>
-                      <span className={`status-badge status-badge--${d.status === 'Active' ? 'active' : 'inactive'}`}>
-                        {d.status === 'Active' ? 'Active' : 'Inactive'}
+                      <span className={`status-badge status-badge--${d.status === 'Active' || d.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                        {d.status === 'Active' || d.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                   </tr>
@@ -79,8 +93,8 @@ export default function MyDirect() {
                     <strong>{d.fullName}</strong>
                     <code className="code-badge">{d.tpeId}</code>
                   </div>
-                  <span className={`status-badge status-badge--${d.status === 'Active' ? 'active' : 'inactive'}`}>
-                    {d.status === 'Active' ? 'Active' : 'Inactive'}
+                  <span className={`status-badge status-badge--${d.status === 'Active' || d.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                    {d.status === 'Active' || d.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 <div className="member-card__details">

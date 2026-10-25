@@ -64,6 +64,14 @@ public class AuthController {
                 : ResponseEntity.badRequest().body(response);
     }
 
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        ApiResponse response = authService.refreshToken(request.getRefreshToken());
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(401).body(response);
+    }
+
     @PostMapping("/resend-otp")
     public ResponseEntity<ApiResponse> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
         ApiResponse response = authService.resendOtp(request.getTpeId(), request.getOtpType());

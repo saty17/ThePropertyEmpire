@@ -28,5 +28,7 @@ export const forgotPassword = (data) => API.post('/forgot-password', data)
 
 export const resetPassword = (data) => API.post('/reset-password', data)
 
+export const refreshToken = (data) => API.post('/refresh-token', data)
+
 export const validateSponsor = (sponsorId) =>
   API.get(`/validate-sponsor/${sponsorId}`)

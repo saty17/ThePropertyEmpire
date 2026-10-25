@@ -31,7 +31,8 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:ThePropertyEmpireSecretKeyForJWTTokenGeneration2024VeryLongSecretKey}
-    expiration: 86400000
+    expiration: 900000
+    refresh-expiration-days: ${REFRESH_TOKEN_EXPIRY_DAYS:7}
   admin:
     email: ${ADMIN_EMAIL:umyanoob@gmail.com}
     password: ${ADMIN_PASSWORD:Admin@123}

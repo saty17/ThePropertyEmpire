@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
     setToken(data.token)
     setUser(data)
     localStorage.setItem('token', data.token)
+    localStorage.setItem('refreshToken', data.refreshToken)
     localStorage.setItem('user', JSON.stringify(data))
   }, [])
 
@@ -35,6 +36,7 @@ export function AuthProvider({ children }) {
     setToken(null)
     setUser(null)
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     navigate('/login', { replace: true })
   }, [navigate])

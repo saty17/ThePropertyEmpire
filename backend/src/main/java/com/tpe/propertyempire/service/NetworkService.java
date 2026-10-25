@@ -26,7 +26,14 @@ public class NetworkService {
         List<User> directs = userRepository.findBySponsorId(tpeId);
         List<TeamMemberDTO> result = new ArrayList<>();
         for (User u : directs) {
-            result.add(TeamMemberDTO.fromUser(u, 1));
+            TeamMemberDTO dto = TeamMemberDTO.fromUser(u, 1);
+            if (u.getSponsorId() != null && !u.getSponsorId().isBlank()) {
+                User sponsor = userRepository.findByTpeId(u.getSponsorId()).orElse(null);
+                dto.setSponsorName(sponsor != null ? sponsor.getFullName() : "-");
+            } else {
+                dto.setSponsorName("-");
+            }
+            result.add(dto);
         }
         return result;
     }
@@ -45,7 +52,14 @@ public class NetworkService {
                 String code = queue.poll();
                 List<User> directs = userRepository.findBySponsorId(code);
                 for (User u : directs) {
-                    result.add(TeamMemberDTO.fromUser(u, level));
+                    TeamMemberDTO dto = TeamMemberDTO.fromUser(u, level);
+                    if (u.getSponsorId() != null && !u.getSponsorId().isBlank()) {
+                        User sponsor = userRepository.findByTpeId(u.getSponsorId()).orElse(null);
+                        dto.setSponsorName(sponsor != null ? sponsor.getFullName() : "-");
+                    } else {
+                        dto.setSponsorName("-");
+                    }
+                    result.add(dto);
                     queue.add(u.getTpeId());
                 }
             }

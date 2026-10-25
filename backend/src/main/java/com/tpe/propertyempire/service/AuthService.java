@@ -23,6 +23,7 @@ public class AuthService {
     private final OtpService otpService;
     private final EmailService emailService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     private static final String DIGITS = "0123456789";
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -30,12 +31,13 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                        OtpService otpService, EmailService emailService,
-                       JwtTokenProvider jwtTokenProvider) {
+                       JwtTokenProvider jwtTokenProvider, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
         this.emailService = emailService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -116,9 +118,11 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String token = jwtTokenProvider.generateToken(userId);
+        String refreshToken = refreshTokenService.createRefreshToken(userId);
 
         AuthResponse authResponse = AuthResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
@@ -184,6 +188,35 @@ public class AuthService {
         emailService.sendOtpEmail(user.getEmail(), otp, purpose);
 
         return ApiResponse.success("OTP resent to your email");
+    }
+
+    @Transactional
+    public ApiResponse refreshToken(String refreshTokenValue) {
+        return refreshTokenService.findByToken(refreshTokenValue)
+                .map(rt -> {
+                    if (rt.isExpired()) {
+                        refreshTokenService.deleteByTpeId(rt.getTpeId());
+                        return ApiResponse.error("Refresh token expired. Please login again.");
+                    }
+
+                    String newAccessToken = jwtTokenProvider.generateToken(rt.getTpeId());
+                    String newRefreshToken = refreshTokenService.createRefreshToken(rt.getTpeId());
+
+                    User user = userRepository.findByTpeId(rt.getTpeId())
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+
+                    AuthResponse authResponse = AuthResponse.builder()
+                            .token(newAccessToken)
+                            .refreshToken(newRefreshToken)
+                            .email(user.getEmail())
+                            .fullName(user.getFullName())
+                            .role(user.getRole().name())
+                            .tpeId(user.getTpeId())
+                            .build();
+
+                    return ApiResponse.success("Token refreshed", authResponse);
+                })
+                .orElse(ApiResponse.error("Invalid refresh token. Please login again."));
     }
 
     public ApiResponse validateSponsor(String tpeId) {

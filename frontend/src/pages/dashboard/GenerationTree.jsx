@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { FiGitBranch, FiPlus, FiMinus, FiArrowLeft, FiSearch } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { getGenerationTree } from '../../api/user'
@@ -49,9 +50,11 @@ function TreeNode({ node, onExpand, expandedNodes }) {
 
 export default function GenerationTree() {
   const { user } = useAuth()
+  const location = useLocation()
   const [tree, setTree] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [rootCode, setRootCode] = useState(null)
+  const [rootCode, setRootCode] = useState(location.state?.rootCode || null)
+  const [rootName, setRootName] = useState(location.state?.rootName || null)
   const [expandedNodes, setExpandedNodes] = useState(new Set())
   const [searchCode, setSearchCode] = useState('')
 
@@ -81,12 +84,12 @@ export default function GenerationTree() {
     })
   }
 
-  const resetToMyTree = () => setRootCode(null)
+  const resetToMyTree = () => { setRootCode(null); setRootName(null) }
 
   return (
     <div className="dash-page">
       <div className="page-header">
-        <h2 className="page-title"><FiGitBranch size={22} /> {rootCode ? `Tree: ${rootCode}` : 'My Generation Tree'}</h2>
+        <h2 className="page-title"><FiGitBranch size={22} /> {rootCode ? `Tree: ${rootName || rootCode}` : 'My Generation Tree'}</h2>
         {rootCode && (
           <button className="btn-outline" onClick={resetToMyTree}>
             <FiArrowLeft size={14} /> Back to My Tree
@@ -106,6 +109,7 @@ export default function GenerationTree() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && searchCode.trim()) {
                   setRootCode(searchCode.trim())
+                  setRootName(null)
                   setSearchCode('')
                 }
               }}
@@ -115,6 +119,7 @@ export default function GenerationTree() {
               onClick={() => {
                 if (searchCode.trim()) {
                   setRootCode(searchCode.trim())
+                  setRootName(null)
                   setSearchCode('')
                 }
               }}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiHash, FiLock, FiEye, FiEyeOff, FiArrowRight, FiShield } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -10,6 +10,13 @@ function Login() {
   const [form, setForm] = useState({ userId: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (localStorage.getItem('session_expired')) {
+      localStorage.removeItem('session_expired')
+      toast.error('Session expired. Please login again.')
+    }
+  }, [])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
