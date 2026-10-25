@@ -45,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
                 .fullName(adminName)
                 .email(adminEmail)
                 .countryCode("+91")
-                .mobile("0000000000")
+                .mobile("8104047471")
                 .password(passwordEncoder.encode(adminPassword))
                 .role(Role.ADMIN)
                 .tpeId(ADMIN_TPE_ID)
